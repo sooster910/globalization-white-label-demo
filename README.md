@@ -57,13 +57,15 @@ python3 scripts/sync_rtm_env.py \
 unset AWS_SHARED_CREDENTIALS_FILE
 ```
 
-개인 AWS 프로필과 계정 ID를 지정하고, 개인용 backend로 초기화합니다. `target_account_id`와 실제 AWS 자격 증명의 계정이 다르면 Terraform AWS provider가 배포를 막습니다. GitHub 연결 토큰은 파일에 쓰지 않고 실행 프로세스의 환경변수로 전달합니다. `sooster910` 계정과 Amplify GitHub App이 이 비공개 저장소에 접근할 수 있어야 합니다.
+개인 AWS 프로필과 계정 ID를 지정하고, 개인용 backend로 초기화합니다. `target_account_id`와 실제 AWS 자격 증명의 계정이 다르면 Terraform AWS provider가 배포를 막습니다. 먼저 `sooster910` 계정에 [해당 리전의 Amplify GitHub App](https://github.com/apps/aws-amplify-us-east-1/installations/new)을 **이 저장소만 선택해서** 설치하고, [AWS 안내](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html)에 따라 `admin:repo_hook` 권한이 있는 GitHub 개인 액세스 토큰을 준비합니다. GitHub CLI의 로그인 토큰은 이 권한을 보장하지 않습니다. 토큰 값은 파일이나 채팅에 남기지 않고 실행 프로세스의 환경변수로만 전달합니다.
 
-```bash
+```zsh
 cd terraform
 export AWS_PROFILE=personal
 export TF_VAR_target_account_id=<PERSONAL_AWS_ACCOUNT_ID>
-export TF_VAR_github_access_token="$(gh auth token --user sooster910)"
+read -rs "TF_VAR_github_access_token?Amplify GitHub PAT: "
+echo
+export TF_VAR_github_access_token
 terraform init -reconfigure -backend-config=backends/personal.s3.tfbackend
 terraform validate
 terraform plan
