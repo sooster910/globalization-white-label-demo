@@ -1,0 +1,79 @@
+# Globalization & White Label Demo
+
+Vite, pnpm, React, TypeScript로 만든 데모입니다. [RTM Brand, Market Deployment Configuration 설계](https://everexjj.atlassian.net/wiki/x/BQDNCQ)와 [ADR-001](https://everexjj.atlassian.net/wiki/x/rgDnCQ)의 **One Source + Environment-specific Build** 방향을 반영했습니다.
+
+## 데모에서 확인할 것
+
+- EverEx / Xenco 로고, 이름, 색상, 지원·법적 링크를 같은 화면에서 비교합니다. 화면의 브랜드 전환은 **미리보기**이며 배포 설정을 바꾸지 않습니다.
+- `public/brands/`의 SVG 로고는 데모용 예시 에셋입니다.
+- 기본 언어는 배포별 `VITE_DEFAULT_LOCALE`로 정하고, 화면에서는 언어별 번역과 `Intl` 날짜·숫자 표시를 살펴볼 수 있습니다.
+- 시간대는 샘플 조직 정보, 통화 코드는 샘플 서버 데이터로 별도 선택합니다. 언어나 시장 코드에서 추론하지 않습니다.
+- 배포 브랜드, API URL, 시장 국가, 기본 언어는 Terraform이 Amplify 빌드에 주입합니다. `src/deploymentConfig.ts`가 시작 시 검증합니다.
+- 데모에는 실제 로그인, `/staff-me` 호출, 환자 API 연동이 없습니다. 화면 데이터는 모두 가상입니다.
+
+## 로컬 실행
+
+```bash
+cd globalization-demo
+pnpm install
+pnpm dev
+```
+
+`.env.development`의 네 값은 로컬 개발용 공개 예시입니다. 프로덕션 빌드는 배포 설정을 명시해야 합니다.
+
+```bash
+VITE_BRAND_ID=everex \
+VITE_API_BASE_URL=https://api.rtm.everex.com \
+VITE_MARKET_COUNTRY_CODE=US \
+VITE_DEFAULT_LOCALE=en-US \
+pnpm build
+```
+
+## Amplify 운영
+
+`terraform/`은 새 데모용 Amplify 앱 두 개(`everex_us`, `xenco_sg`)를 정의합니다. 두 앱은 같은 Git 저장소와 브랜치를 사용하지만 각자의 네 `VITE_*` 값으로 **각각 Vite 빌드**를 실행합니다. 기존 RTM 앱이나 도메인을 수정하지 않습니다.
+
+### 개인 AWS + 개인 GitHub 계정
+
+기본 Git 저장소는 [sooster910/globalization-white-label-demo](https://github.com/sooster910/globalization-white-label-demo)입니다. 개인 AWS CLI 프로필을 준비한 다음, **본인 계정 ID**를 확인합니다. 아래 준비 스크립트를 실행하면 개인 계정에 Terraform state 전용 S3 버킷이 생성됩니다. 버킷에는 공개 접근 차단, 서버 측 암호화, 버전 관리를 적용합니다. S3 보관량과 요청에 따른 비용이 발생할 수 있습니다.
+
+```bash
+aws sts get-caller-identity --profile personal --query '{Account:Account,Arn:Arn}'
+python3 scripts/prepare_personal_backend.py \
+  --profile personal \
+  --expected-account-id <PERSONAL_AWS_ACCOUNT_ID>
+```
+
+RTM Amplify 앱에서 환경변수를 가져올 때는 **RTM을 읽을 수 있는 별도 AWS 프로필**을 사용합니다. `--demo-public-only`는 데모에 필요한 공개 `VITE_HOST_URL`만 복사하므로 RTM 비밀값을 개인 계정에 옮기지 않습니다. 원본 앱/브랜치 값은 로컬 `terraform/rtm.auto.tfvars.json`에 저장되고 Git에서 제외됩니다. 기존 IAM 사용자는 MFA 세션이 필요할 수 있습니다.
+
+```bash
+python3 scripts/aws_mfa_session.py
+export AWS_SHARED_CREDENTIALS_FILE="$HOME/.aws/globalization-demo-session"
+python3 scripts/sync_rtm_env.py \
+  --source-app-id <RTM_APP_ID> \
+  --source-branch <RTM_BRANCH> \
+  --profile mfa \
+  --demo-public-only
+unset AWS_SHARED_CREDENTIALS_FILE
+```
+
+개인 AWS 프로필과 계정 ID를 지정하고, 개인용 backend로 초기화합니다. `target_account_id`와 실제 AWS 자격 증명의 계정이 다르면 Terraform AWS provider가 배포를 막습니다. GitHub 연결 토큰은 파일에 쓰지 않고 실행 프로세스의 환경변수로 전달합니다. `sooster910` 계정과 Amplify GitHub App이 이 비공개 저장소에 접근할 수 있어야 합니다.
+
+```bash
+cd terraform
+export AWS_PROFILE=personal
+export TF_VAR_target_account_id=<PERSONAL_AWS_ACCOUNT_ID>
+export TF_VAR_github_access_token="$(gh auth token --user sooster910)"
+terraform init -reconfigure -backend-config=backends/personal.s3.tfbackend
+terraform validate
+terraform plan
+terraform apply
+terraform output demo_urls
+```
+
+`globalization-demo/` 폴더 자체가 Git 저장소 루트이므로 `app_root` 기본값은 `.`입니다. API URL을 별도로 지정하지 않으면 RTM에서 복사한 `VITE_HOST_URL`을 두 배포에 사용합니다. Xenco SG 전용 백엔드가 준비되면 `deployments.xenco_sg.api_base_url`을 지정해야 합니다. 현재 데모 화면은 API를 호출하지 않습니다. RTM 환경변수 전체를 넘기면 `SENTRY_AUTH_TOKEN` 등 비밀값도 Terraform state와 Amplify에 저장됩니다. `VITE_*` 값은 Vite 번들에 공개되므로 비밀값을 넣으면 안 됩니다.
+
+## 현재 확인 상태
+
+- `pnpm build`, `pnpm lint`, `terraform validate` 통과
+- 개인 AWS state 버킷과 Amplify 앱은 아직 생성하지 않았습니다. `terraform apply`도 실행하지 않았습니다.
