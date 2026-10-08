@@ -37,7 +37,7 @@ pnpm build
 
 기본 Git 저장소는 [sooster910/globalization-white-label-demo](https://github.com/sooster910/globalization-white-label-demo)입니다. 개인 AWS CLI 프로필을 준비한 다음, **본인 계정 ID**를 확인합니다. 아래 준비 스크립트를 실행하면 개인 계정에 Terraform state 전용 S3 버킷이 생성됩니다. 버킷에는 공개 접근 차단, 서버 측 암호화, 버전 관리를 적용합니다. S3 보관량과 요청에 따른 비용이 발생할 수 있습니다.
 
-계정 `866222014403`의 `terraform-demo` IAM 사용자로 실행할 때는 먼저 계정 관리자에게 [`terraform/personal-aws-iam-policy.json`](terraform/personal-aws-iam-policy.json)을 사용자 인라인 정책으로 추가해 달라고 요청해야 합니다. 이 정책은 이 데모의 state 버킷과 `us-east-1`의 Amplify 앱 관리에 필요한 권한을 담고 있습니다. 현재 사용자는 자신의 IAM 정책을 추가할 권한이 없습니다. 이미 생성된 빈 state 버킷은 준비 스크립트를 다시 실행하면 보호 설정을 이어서 적용합니다.
+계정 `866222014403`의 `terraform-demo` IAM 사용자로 실행할 때는 먼저 계정 관리자에게 [`terraform/personal-aws-iam-policy.json`](terraform/personal-aws-iam-policy.json)을 사용자 인라인 정책으로 추가해 달라고 요청해야 합니다. [AWS 콘솔](https://console.aws.amazon.com/iam/)에서 **사용자 → terraform-demo → 권한 → 권한 추가 → 인라인 정책 생성 → JSON** 순서로 이동해 파일 내용을 붙여 넣습니다. 이 정책은 이 데모의 state 버킷과 `us-east-1`의 Amplify 앱 관리에 필요한 권한을 담고 있습니다. 현재 사용자는 자신의 IAM 정책을 추가할 권한이 없습니다. 이미 생성된 빈 state 버킷은 준비 스크립트를 다시 실행하면 보호 설정을 이어서 적용합니다.
 
 이 Mac처럼 회사 네트워크의 Zscaler 인증서를 사용하는 경우 AWS CLI의 S3 TLS 검증에 추가 CA 묶음이 필요합니다. `python3 scripts/prepare_aws_ca_bundle.py`가 macOS Keychain에 이미 신뢰된 공개 CA를 임시 파일에 합칩니다. 출력된 `export AWS_CA_BUNDLE=...` 명령을 **같은 터미널**에서 실행한 다음 AWS CLI와 Terraform을 실행합니다.
 
@@ -61,7 +61,7 @@ python3 scripts/sync_rtm_env.py \
 unset AWS_SHARED_CREDENTIALS_FILE
 ```
 
-개인 AWS 프로필과 계정 ID를 지정하고, 개인용 backend로 초기화합니다. `target_account_id`와 실제 AWS 자격 증명의 계정이 다르면 Terraform AWS provider가 배포를 막습니다. 먼저 `sooster910` 계정에 [해당 리전의 Amplify GitHub App](https://github.com/apps/aws-amplify-us-east-1/installations/new)을 **이 저장소만 선택해서** 설치하고, [AWS 안내](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html)에 따라 `admin:repo_hook` 권한이 있는 GitHub 개인 액세스 토큰을 준비합니다. GitHub CLI의 로그인 토큰은 이 권한을 보장하지 않습니다. 토큰 값은 파일이나 채팅에 남기지 않고 실행 프로세스의 환경변수로만 전달합니다.
+개인 AWS 프로필과 계정 ID를 지정하고, 개인용 backend로 초기화합니다. `target_account_id`와 실제 AWS 자격 증명의 계정이 다르면 Terraform AWS provider가 배포를 막습니다. 먼저 `sooster910` 계정에 [해당 리전의 Amplify GitHub App](https://github.com/apps/aws-amplify-us-east-1/installations/new)을 **이 저장소만 선택해서** 설치하고, [AWS 안내](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html)에 따라 GitHub **Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token**에서 `admin:repo_hook` 권한의 연결용 토큰을 준비합니다. GitHub CLI의 로그인 토큰은 이 권한을 보장하지 않습니다. 토큰 값은 파일이나 채팅에 남기지 않고 실행 프로세스의 환경변수로만 전달합니다.
 
 ```zsh
 cd terraform
