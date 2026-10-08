@@ -37,6 +37,8 @@ pnpm build
 
 기본 Git 저장소는 [sooster910/globalization-white-label-demo](https://github.com/sooster910/globalization-white-label-demo)입니다. 개인 AWS CLI 프로필을 준비한 다음, **본인 계정 ID**를 확인합니다. 아래 준비 스크립트를 실행하면 개인 계정에 Terraform state 전용 S3 버킷이 생성됩니다. 버킷에는 공개 접근 차단, 서버 측 암호화, 버전 관리를 적용합니다. S3 보관량과 요청에 따른 비용이 발생할 수 있습니다.
 
+계정 `866222014403`의 `terraform-demo` IAM 사용자로 실행할 때는 먼저 계정 관리자에게 [`terraform/personal-aws-iam-policy.json`](terraform/personal-aws-iam-policy.json)을 사용자 인라인 정책으로 추가해 달라고 요청해야 합니다. 이 정책은 이 데모의 state 버킷과 `us-east-1`의 Amplify 앱 관리에 필요한 권한을 담고 있습니다. 현재 사용자는 자신의 IAM 정책을 추가할 권한이 없습니다. 이미 생성된 빈 state 버킷은 준비 스크립트를 다시 실행하면 보호 설정을 이어서 적용합니다.
+
 ```bash
 aws sts get-caller-identity --profile personal --query '{Account:Account,Arn:Arn}'
 python3 scripts/prepare_personal_backend.py \
@@ -78,4 +80,5 @@ terraform output demo_urls
 ## 현재 확인 상태
 
 - `pnpm build`, `pnpm lint`, `terraform validate` 통과
-- 개인 AWS state 버킷과 Amplify 앱은 아직 생성하지 않았습니다. `terraform apply`도 실행하지 않았습니다.
+- 계정 `866222014403`에 빈 state 버킷은 생성됐으나 IAM 권한 부족으로 공개 접근 차단·암호화·버전 관리 설정을 완료하지 못했습니다.
+- Amplify 앱은 아직 생성하지 않았고 `terraform apply`도 실행하지 않았습니다.

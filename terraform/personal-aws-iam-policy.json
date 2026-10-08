@@ -1,0 +1,66 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PrepareDemoStateBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:GetEncryptionConfiguration",
+        "s3:PutEncryptionConfiguration",
+        "s3:GetBucketVersioning",
+        "s3:PutBucketVersioning",
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::globalization-demo-terraform-866222014403-us-east-1"
+    },
+    {
+      "Sid": "ReadWriteDemoState",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": "arn:aws:s3:::globalization-demo-terraform-866222014403-us-east-1/globalization-demo/terraform.tfstate"
+    },
+    {
+      "Sid": "LockDemoState",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::globalization-demo-terraform-866222014403-us-east-1/globalization-demo/terraform.tfstate.tflock"
+    },
+    {
+      "Sid": "CreateAndListDemoAmplifyApps",
+      "Effect": "Allow",
+      "Action": ["amplify:CreateApp", "amplify:ListApps"],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {"aws:RequestedRegion": "us-east-1"}
+      }
+    },
+    {
+      "Sid": "ManageDemoAmplifyApps",
+      "Effect": "Allow",
+      "Action": [
+        "amplify:GetApp",
+        "amplify:UpdateApp",
+        "amplify:DeleteApp",
+        "amplify:CreateBranch",
+        "amplify:GetBranch",
+        "amplify:UpdateBranch",
+        "amplify:DeleteBranch",
+        "amplify:ListBranches",
+        "amplify:ListTagsForResource",
+        "amplify:TagResource",
+        "amplify:UntagResource",
+        "amplify:StartJob",
+        "amplify:GetJob",
+        "amplify:ListJobs"
+      ],
+      "Resource": [
+        "arn:aws:amplify:us-east-1:866222014403:apps/*",
+        "arn:aws:amplify:us-east-1:866222014403:apps/*/branches/*",
+        "arn:aws:amplify:us-east-1:866222014403:apps/*/branches/*/jobs/*"
+      ]
+    }
+  ]
+}

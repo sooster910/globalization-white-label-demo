@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Prepare an encrypted, private S3 state bucket in an explicitly checked AWS account.
 
-This script creates AWS resources only when run by the user. It does not run
-Terraform or create Amplify apps.
+This script creates an AWS bucket when invoked. It does not run Terraform or
+create Amplify apps.
 """
 
 import argparse
