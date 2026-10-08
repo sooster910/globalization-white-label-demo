@@ -39,6 +39,8 @@ pnpm build
 
 계정 `866222014403`의 `terraform-demo` IAM 사용자로 실행할 때는 먼저 계정 관리자에게 [`terraform/personal-aws-iam-policy.json`](terraform/personal-aws-iam-policy.json)을 사용자 인라인 정책으로 추가해 달라고 요청해야 합니다. 이 정책은 이 데모의 state 버킷과 `us-east-1`의 Amplify 앱 관리에 필요한 권한을 담고 있습니다. 현재 사용자는 자신의 IAM 정책을 추가할 권한이 없습니다. 이미 생성된 빈 state 버킷은 준비 스크립트를 다시 실행하면 보호 설정을 이어서 적용합니다.
 
+이 Mac처럼 회사 네트워크의 Zscaler 인증서를 사용하는 경우 AWS CLI의 S3 TLS 검증에 추가 CA 묶음이 필요합니다. `python3 scripts/prepare_aws_ca_bundle.py`가 macOS Keychain에 이미 신뢰된 공개 CA를 임시 파일에 합칩니다. 출력된 `export AWS_CA_BUNDLE=...` 명령을 **같은 터미널**에서 실행한 다음 AWS CLI와 Terraform을 실행합니다.
+
 ```bash
 aws sts get-caller-identity --profile personal --query '{Account:Account,Arn:Arn}'
 python3 scripts/prepare_personal_backend.py \
