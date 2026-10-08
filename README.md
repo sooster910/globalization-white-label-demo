@@ -63,7 +63,7 @@ unset AWS_SHARED_CREDENTIALS_FILE
 
 개인 AWS 프로필과 계정 ID를 지정하고, 개인용 backend로 초기화합니다. `target_account_id`와 실제 AWS 자격 증명의 계정이 다르면 Terraform AWS provider가 배포를 막습니다. 먼저 `sooster910` 계정에 [해당 리전의 Amplify GitHub App](https://github.com/apps/aws-amplify-us-east-1/installations/new)을 **이 데모 저장소를 포함하도록** 설치하고, [AWS 안내](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html)에 따라 GitHub **Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token**에서 `admin:repo_hook` 권한의 연결용 토큰을 준비합니다. GitHub CLI의 로그인 토큰은 이 권한을 보장하지 않습니다.
 
-현재 개인 계정 배포는 `python3 scripts/deploy_personal.py`로 실행합니다. 스크립트가 토큰을 터미널에서 숨김 입력으로 받고, GitHub API에서 토큰과 `sooster910` 계정을 확인합니다. 이어서 AWS 계정과 Terraform 변경 내역을 검사한 뒤 예상한 Amplify 앱 2개와 브랜치 2개만 적용합니다. 토큰은 채팅이나 Git 저장소 파일에 넣지 않습니다. Terraform 임시 plan과 암호화된 S3 state에는 민감한 값이 들어갈 수 있습니다. `401 Bad credentials`가 나오면 [GitHub classic PAT 화면](https://github.com/settings/tokens)에서 새 토큰을 복사해 다시 실행합니다.
+최초 개인 계정 배포는 `python3 scripts/deploy_personal.py`로 실행합니다. 스크립트가 토큰을 터미널에서 숨김 입력으로 받고, GitHub API에서 토큰과 `sooster910` 계정을 확인합니다. 이어서 AWS 계정과 Terraform 변경 내역을 검사한 뒤 예상한 Amplify 앱 2개와 브랜치 2개만 적용합니다. 이 스크립트는 **최초 생성 계획만** 적용하므로 이미 배포된 앱에는 다시 실행하지 않습니다. 토큰은 채팅이나 Git 저장소 파일에 넣지 않습니다. Terraform 임시 plan과 암호화된 S3 state에는 민감한 값이 들어갈 수 있습니다. `401 Bad credentials`가 나오면 [GitHub classic PAT 화면](https://github.com/settings/tokens)에서 새 토큰을 복사해 다시 실행합니다.
 
 ```bash
 python3 scripts/deploy_personal.py
@@ -88,11 +88,20 @@ unset TF_VAR_github_access_token
 
 `globalization-demo/` 폴더 자체가 Git 저장소 루트이므로 `app_root` 기본값은 `.`입니다. API URL을 별도로 지정하지 않으면 RTM에서 복사한 `VITE_HOST_URL`을 두 배포에 사용합니다. Xenco SG 전용 백엔드가 준비되면 `deployments.xenco_sg.api_base_url`을 지정해야 합니다. 현재 데모 화면은 API를 호출하지 않습니다. RTM 환경변수 전체를 넘기면 `SENTRY_AUTH_TOKEN` 등 비밀값도 Terraform state와 Amplify에 저장됩니다. `VITE_*` 값은 Vite 번들에 공개되므로 비밀값을 넣으면 안 됩니다.
 
+### 실제 데모 주소와 코드 배포
+
+| 배포 | 주소 | Amplify 앱 ID |
+| --- | --- | --- |
+| EverEx US | https://main.d3aatlp1imw7oq.amplifyapp.com | `d3aatlp1imw7oq` |
+| Xenco SG | https://main.d3tcxkitlnwfsa.amplifyapp.com | `d3tcxkitlnwfsa` |
+
+두 앱은 개인 저장소의 `main` 브랜치를 연결했고 자동 빌드를 켰습니다. 앱 코드 변경은 이 브랜치로 푸시하면 각각 새 빌드로 배포됩니다. 인프라 설정을 바꿀 때는 `terraform/`에서 개인 AWS 프로필과 GitHub PAT를 준비한 뒤 `terraform plan`을 검토하고 `terraform apply`를 실행합니다. Amplify 빌드·배포·데이터 전송과 S3 state 저장에는 개인 계정 비용이 발생할 수 있습니다.
+
 ## 현재 확인 상태
 
 - `pnpm build`, `pnpm lint`, `terraform validate` 통과
 - 계정 `866222014403`의 state 버킷에 공개 접근 차단·암호화·버전 관리를 적용했고, 개인 S3 backend로 `terraform init`을 완료했습니다.
 - `sooster910/globalization-white-label-demo` 저장소가 `AWS Amplify (us-east-1)` GitHub App의 선택 저장소에 포함된 것을 확인했습니다.
 - `FE-EverExRTM`의 `develop` 브랜치에서 공개 `VITE_HOST_URL`만 로컬 Git 제외 변수 파일에 동기화했습니다.
-- GitHub 연결용 토큰의 터미널 입력이 아직 필요합니다.
-- Amplify 앱은 아직 생성하지 않았고 `terraform apply`도 실행하지 않았습니다.
+- 개인 AWS 계정에 Terraform으로 Amplify 앱 2개와 각 `main` 브랜치를 생성했습니다. 첫 RELEASE 작업의 BUILD·DEPLOY·VERIFY가 두 앱 모두 성공했고 위 URL은 HTTP 200 및 실제 화면 렌더링을 확인했습니다.
+- 두 앱의 Amplify 환경변수는 공개 `VITE_*` 5개뿐이며, `VITE_HOST_URL`과 `VITE_API_BASE_URL`은 RTM `develop` 값과 일치합니다.
