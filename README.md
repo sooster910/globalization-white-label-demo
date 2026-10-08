@@ -82,5 +82,7 @@ terraform output demo_urls
 ## 현재 확인 상태
 
 - `pnpm build`, `pnpm lint`, `terraform validate` 통과
-- 계정 `866222014403`에 빈 state 버킷은 생성됐으나 IAM 권한 부족으로 공개 접근 차단·암호화·버전 관리 설정을 완료하지 못했습니다.
+- 계정 `866222014403`의 state 버킷에 공개 접근 차단·암호화·버전 관리를 적용했고, 개인 S3 backend로 `terraform init`을 완료했습니다.
+- `sooster910/globalization-white-label-demo` 저장소가 `AWS Amplify (us-east-1)` GitHub App의 선택 저장소에 포함된 것을 확인했습니다.
+- RTM 공개 환경변수 동기화와 GitHub 연결용 토큰 전달은 아직 필요합니다.
 - Amplify 앱은 아직 생성하지 않았고 `terraform apply`도 실행하지 않았습니다.
