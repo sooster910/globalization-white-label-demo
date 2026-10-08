@@ -10,10 +10,12 @@ is kept in a private temporary directory and the S3 backend is encrypted.
 import getpass
 import json
 import os
+import ssl
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from urllib import error, request
 
 from prepare_aws_ca_bundle import OUTPUT as CA_BUNDLE, main as prepare_ca_bundle
 
@@ -41,6 +43,39 @@ def run(command, environment, *, capture=False):
         text=True,
         capture_output=capture,
     )
+
+
+def verify_github_token(token):
+    github_request = request.Request(
+        "https://api.github.com/user",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "User-Agent": "globalization-white-label-demo",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    try:
+        context = ssl.create_default_context(cafile=str(CA_BUNDLE))
+        with request.urlopen(github_request, context=context, timeout=20) as response:
+            user = json.load(response)
+            scopes = {
+                scope.strip()
+                for scope in response.headers.get("X-OAuth-Scopes", "").split(",")
+                if scope.strip()
+            }
+    except error.HTTPError as failure:
+        if failure.code == 401:
+            raise ValueError("GitHub가 PAT를 401 Bad credentials로 거절했습니다. 새로 발급한 토큰을 다시 복사해 주세요.") from None
+        raise ValueError(f"GitHub PAT 확인 실패 (HTTP {failure.code}).") from None
+    except (error.URLError, ssl.SSLError) as failure:
+        raise ValueError(f"GitHub API 연결 실패: {failure.reason if isinstance(failure, error.URLError) else failure}") from None
+
+    if user.get("login") != "sooster910":
+        raise ValueError("PAT의 GitHub 계정이 sooster910이 아닙니다.")
+    if scopes and not scopes.intersection({"admin:repo_hook", "repo"}):
+        raise ValueError("PAT에 admin:repo_hook 또는 이를 포함하는 repo 권한이 없습니다.")
+    print("GitHub PAT 인증 확인 완료: sooster910 (토큰 값은 출력하지 않음).", flush=True)
 
 
 def main():
@@ -87,6 +122,7 @@ def main():
         token = getpass.getpass("GitHub classic PAT (admin:repo_hook): ").strip()
         if not token.startswith("ghp_"):
             raise ValueError("GitHub classic PAT(ghp_...)을 입력해 주세요.")
+        verify_github_token(token)
         environment["TF_VAR_github_access_token"] = token
         del token
 

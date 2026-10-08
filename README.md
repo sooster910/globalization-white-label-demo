@@ -63,7 +63,7 @@ unset AWS_SHARED_CREDENTIALS_FILE
 
 개인 AWS 프로필과 계정 ID를 지정하고, 개인용 backend로 초기화합니다. `target_account_id`와 실제 AWS 자격 증명의 계정이 다르면 Terraform AWS provider가 배포를 막습니다. 먼저 `sooster910` 계정에 [해당 리전의 Amplify GitHub App](https://github.com/apps/aws-amplify-us-east-1/installations/new)을 **이 데모 저장소를 포함하도록** 설치하고, [AWS 안내](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html)에 따라 GitHub **Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token**에서 `admin:repo_hook` 권한의 연결용 토큰을 준비합니다. GitHub CLI의 로그인 토큰은 이 권한을 보장하지 않습니다.
 
-현재 개인 계정 배포는 `python3 scripts/deploy_personal.py`로 실행합니다. 스크립트가 토큰을 터미널에서 숨김 입력으로 받고, AWS 계정과 Terraform 변경 내역을 검사한 뒤 예상한 Amplify 앱 2개와 브랜치 2개만 적용합니다. 토큰은 채팅이나 Git 저장소 파일에 넣지 않습니다. Terraform 임시 plan과 암호화된 S3 state에는 민감한 값이 들어갈 수 있습니다.
+현재 개인 계정 배포는 `python3 scripts/deploy_personal.py`로 실행합니다. 스크립트가 토큰을 터미널에서 숨김 입력으로 받고, GitHub API에서 토큰과 `sooster910` 계정을 확인합니다. 이어서 AWS 계정과 Terraform 변경 내역을 검사한 뒤 예상한 Amplify 앱 2개와 브랜치 2개만 적용합니다. 토큰은 채팅이나 Git 저장소 파일에 넣지 않습니다. Terraform 임시 plan과 암호화된 S3 state에는 민감한 값이 들어갈 수 있습니다. `401 Bad credentials`가 나오면 [GitHub classic PAT 화면](https://github.com/settings/tokens)에서 새 토큰을 복사해 다시 실행합니다.
 
 ```bash
 python3 scripts/deploy_personal.py
